@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LIMEX Vision II — WhiteDot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,200;0,300;0,400;1,300&family=Playfair+Display:ital,wght@0,400;1,300&display=swap">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --bg:#0b0c0d;
+  --accent:#6fa0bc;
+  --accent2:#4d8cac;
+  --text:#d8e4ea;
+  --dim:rgba(216,228,234,.38);
+  --grid:rgba(100,150,180,.06);
+  --border:rgba(100,150,180,.1);
+}
+
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:200}
+
+/* Blueprint grid */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:55px 55px;
+  pointer-events:none;z-index:0;
+}
+body::after{
+  content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse at 50% 50%,transparent 30%,rgba(0,0,0,.65) 100%);
+  pointer-events:none;z-index:1;
+}
+
+canvas{position:fixed;inset:0;pointer-events:none;z-index:3}
+
+/* ── Header ─────────────────────────────────────────── */
+.hdr{
+  position:fixed;top:1.8rem;left:2rem;
+  z-index:200;display:flex;align-items:center;gap:1rem;
+}
+.hdr-logo{font-size:.58rem;letter-spacing:.4em;color:rgba(216,228,234,.35);text-transform:uppercase;font-weight:300}
+.hdr-tag{
+  font-size:.44rem;letter-spacing:.22em;color:var(--accent);text-transform:uppercase;
+  padding:.18rem .5rem;border:1px solid rgba(111,160,188,.28);border-radius:2px;
+}
+
+/* ── Chapter counter + vertical prog ────────────────── */
+.side-ui{
+  position:fixed;left:1.4rem;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:.7rem;
+  z-index:200;
+}
+.side-count{font-size:.44rem;letter-spacing:.2em;color:rgba(216,228,234,.3);font-weight:300;min-width:22px;text-align:center}
+.side-bar{width:1px;height:100px;background:rgba(111,160,188,.12);position:relative;overflow:hidden}
+.side-fill{position:absolute;top:0;left:0;right:0;background:var(--accent);transition:height .65s ease;height:0%}
+
+/* ── Nav arrows (bottom right) ──────────────────────── */
+.nav-arrows{
+  position:fixed;bottom:2rem;right:2rem;
+  display:flex;gap:.7rem;z-index:200;
+}
+.nav-btn{
+  width:34px;height:34px;border:1px solid var(--border);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--dim);font-size:.7rem;
+  background:rgba(11,12,13,.6);backdrop-filter:blur(8px);
+  transition:all .3s ease;
+}
+.nav-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── Scroll hint ─────────────────────────────────────── */
+.hint{
+  position:fixed;bottom:2.2rem;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:.8rem;
+  opacity:.28;z-index:200;
+  font-size:.44rem;letter-spacing:.35em;text-transform:uppercase;
+  transition:opacity .5s;
+}
+.hint-dots{display:flex;gap:.3rem}
+.hint-dots span{
+  width:3px;height:3px;border-radius:50%;background:var(--text);
+  animation:dslide 2s ease-in-out infinite;
+}
+.hint-dots span:nth-child(2){animation-delay:.18s}
+.hint-dots span:nth-child(3){animation-delay:.36s}
+@keyframes dslide{0%,100%{opacity:.15;transform:translateX(-3px)}50%{opacity:.9;transform:translateX(3px)}}
+
+/* ── Horizontal track ────────────────────────────────── */
+#track{
+  position:fixed;inset:0;
+  display:flex;flex-direction:row;
+  transition:transform .9s cubic-bezier(.77,0,.23,1);
+  z-index:5;
+}
+
+/* ── Section ─────────────────────────────────────────── */
+.sec{
+  min-width:100vw;height:100vh;
+  display:flex;align-items:stretch;
+  position:relative;overflow:hidden;
+}
+
+/* ── Left: stone display ─────────────────────────────── */
+.lp{
+  width:44%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;border-right:1px solid var(--border);
+  flex-shrink:0;
+}
+/* Corner brackets */
+.cb{position:absolute;width:16px;height:16px;border-color:rgba(111,160,188,.22);border-style:solid}
+.cb-tl{top:7%;left:7%;border-width:1px 0 0 1px}
+.cb-tr{top:7%;right:7%;border-width:1px 1px 0 0}
+.cb-bl{bottom:7%;left:7%;border-width:0 0 1px 1px}
+.cb-br{bottom:7%;right:7%;border-width:0 1px 1px 0}
+
+/* ── Right: text ─────────────────────────────────────── */
+.rp{
+  width:56%;height:100%;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:0 9% 0 8%;
+  position:relative;overflow:hidden;
+}
+.bg-num{
+  position:absolute;right:-4%;bottom:-18%;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:min(40vw,420px);
+  color:var(--text);opacity:.016;
+  line-height:1;pointer-events:none;user-select:none;
+}
+
+/* ── Text block animate ──────────────────────────────── */
+.txt{
+  position:relative;z-index:1;
+  opacity:0;transform:translateX(26px);
+  transition:opacity .82s ease .38s,transform .82s cubic-bezier(.16,1,.3,1) .38s;
+}
+.sec.on .txt{opacity:1;transform:translateX(0)}
+
+.lbl{
+  font-size:.48rem;letter-spacing:.5em;color:var(--accent);
+  text-transform:uppercase;font-weight:300;
+  display:flex;align-items:center;gap:.8rem;margin-bottom:1.4rem;
+}
+.lbl::before{content:'';width:26px;height:1px;background:var(--accent);opacity:.55}
+
+.sec h2{
+  font-family:'Playfair Display',serif;font-style:italic;font-weight:300;
+  font-size:clamp(1.7rem,3vw,2.8rem);line-height:1.2;
+  margin-bottom:1.1rem;
+}
+.sec p{
+  font-size:.66rem;line-height:1.9;color:var(--dim);
+  max-width:40ch;margin-bottom:2rem;
+}
+.specs{
+  padding-top:1.3rem;border-top:1px solid var(--border);
+  display:flex;flex-direction:column;gap:.55rem;
+}
+.sr{display:flex;justify-content:space-between;font-size:.48rem;letter-spacing:.12em;text-transform:uppercase}
+.sk{color:rgba(216,228,234,.28);font-weight:300}
+.sv{color:var(--accent);font-weight:300}
+
+/* ── Stage animate ───────────────────────────────────── */
+.stage{
+  position:relative;display:flex;align-items:center;justify-content:center;
+  opacity:0;transform:scale(.88) translateX(-18px);
+  transition:opacity .92s ease .12s,transform .92s cubic-bezier(.34,1.56,.64,1) .12s;
+}
+.sec.on .stage{opacity:1;transform:scale(1) translateX(0)}
+
+/* ══ STONE OBJECTS V2 ═══════════════════════════════════ */
+
+/* 1 — Medallion with orbit rings */
+.medal{
+  width:185px;height:185px;border-radius:50%;
+  background:
+    radial-gradient(circle at 33% 28%,rgba(255,253,248,.9) 0%,rgba(220,215,205,.5) 28%,rgba(162,157,147,.88) 67%,rgba(115,110,102,1) 100%);
+  box-shadow:0 32px 65px -10px rgba(0,0,0,.92),inset -24px -24px 52px rgba(0,0,0,.44),inset 20px 20px 36px rgba(255,252,248,.13);
+  position:relative;overflow:hidden;
+  animation:mfloat 7s ease-in-out infinite;
+}
+.medal::before{content:'';position:absolute;inset:0;border-radius:50%;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.78' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity:.09;mix-blend-mode:overlay}
+.orb{position:absolute;border-radius:50%;pointer-events:none}
+.o1{inset:-28px;border:1px solid rgba(111,160,188,.22);animation:spin1 10s linear infinite}
+.o1::after{content:'';position:absolute;top:-3px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent),0 0 16px var(--accent)}
+.o2{inset:-46px;border:1px dashed rgba(111,160,188,.1);animation:spin1 15s linear infinite reverse}
+@keyframes spin1{to{transform:rotate(360deg)}}
+@keyframes mfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+
+/* 2 — Topographic sphere */
+.topo{
+  width:196px;height:196px;border-radius:50%;
+  background:radial-gradient(circle at 34% 30%,rgba(255,253,248,.9) 0%,rgba(218,213,203,.5) 30%,rgba(162,157,147,.88) 66%,rgba(115,110,102,1) 100%);
+  box-shadow:0 35px 65px -12px rgba(0,0,0,.9),inset -26px -26px 55px rgba(0,0,0,.44),inset 20px 20px 38px rgba(255,252,248,.13);
+  position:relative;overflow:hidden;
+  animation:tfloat 6.5s ease-in-out infinite;
+}
+.tl{position:absolute;left:0;right:0;border-top:1px solid rgba(111,160,188,.16)}
+@keyframes tfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-13px)}}
+
+/* 3 — Ultra-thin profile bar */
+.profwrap{display:flex;flex-direction:column;align-items:center;animation:pfloat 5.8s ease-in-out infinite}
+@keyframes pfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-11px)}}
+.profbar{
+  width:285px;height:9px;border-radius:2px 2px 0 0;
+  background:linear-gradient(180deg,rgba(255,252,244,.92) 0%,#ddd8d0 30%,#c2bdb5 60%,#a5a09a 90%,rgba(0,0,0,.42) 100%);
+  box-shadow:0 42px 60px -8px rgba(0,0,0,.96),0 18px 32px -5px rgba(0,0,0,.72),inset 0 2px 0 rgba(255,255,255,.75);
+  position:relative;
+}
+.dimline{position:absolute;top:-22px;left:0;right:0;border-top:1px solid rgba(111,160,188,.28)}
+.dimline::before,.dimline::after{content:'';position:absolute;top:-4px;width:1px;height:8px;background:rgba(111,160,188,.28)}
+.dimline::before{left:0}.dimline::after{right:0}
+.dimlabel{position:absolute;top:-38px;left:50%;transform:translateX(-50%);font-size:.4rem;letter-spacing:.22em;color:var(--accent);white-space:nowrap;text-transform:uppercase}
+.profshadow{width:200px;height:4px;margin-top:3px;background:rgba(0,0,0,.5);filter:blur(9px)}
+
+/* 4 — Exploded cross-section */
+.expl{
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  animation:efloat 6s ease-in-out infinite;
+}
+@keyframes efloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.exl{border-radius:3px;box-shadow:0 5px 22px rgba(0,0,0,.52);position:relative}
+.ew{width:255px;height:13px;background:linear-gradient(90deg,#ede8e0,#f2ede5,#ede8e0)}
+.el{
+  width:255px;height:58px;
+  background:radial-gradient(ellipse at 22% 50%,rgba(248,244,234,.72) 0%,transparent 38%),linear-gradient(90deg,#ccc7bf,#d8d3cb,#ccc7bf);
+}
+.etag{
+  position:absolute;right:-90px;top:50%;transform:translateY(-50%);
+  display:flex;align-items:center;gap:5px;
+}
+.etag-line{width:58px;height:1px;background:rgba(111,160,188,.25)}
+.etag-text{font-size:.4rem;letter-spacing:.2em;color:rgba(111,160,188,.58);text-transform:uppercase;white-space:nowrap}
+
+/* 5 — Precision tile with crosshair */
+.ptile{
+  width:205px;height:205px;border-radius:5px;
+  background:radial-gradient(ellipse at 28% 22%,rgba(255,252,244,.7) 0%,transparent 45%),linear-gradient(145deg,#dad5cd 0%,#e8e3db 45%,#c5c0b8 75%,#cec9c1 100%);
+  box-shadow:0 42px 68px -12px rgba(0,0,0,.96),inset 0 1px 0 rgba(255,255,255,.48);
+  position:relative;overflow:hidden;
+  animation:tlfloat 6.2s ease-in-out infinite;
+}
+.ptile::before{content:'';position:absolute;inset:0;border-radius:5px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity:.08;mix-blend-mode:overlay;border-radius:inherit}
+.tcb{position:absolute;width:11px;height:11px;border-color:rgba(111,160,188,.45);border-style:solid}
+.tcb-tl{top:-1px;left:-1px;border-width:2px 0 0 2px}
+.tcb-tr{top:-1px;right:-1px;border-width:2px 2px 0 0}
+.tcb-bl{bottom:-1px;left:-1px;border-width:0 0 2px 2px}
+.tcb-br{bottom:-1px;right:-1px;border-width:0 2px 2px 0}
+.cross::before,.cross::after{content:'';position:absolute;background:rgba(111,160,188,.1)}
+.cross::before{top:50%;left:18%;right:18%;height:1px}
+.cross::after{left:50%;top:18%;bottom:18%;width:1px}
+@keyframes tlfloat{0%,100%{transform:perspective(700px) rotateY(9deg) translateY(0)}50%{transform:perspective(700px) rotateY(6deg) translateY(-12px)}}
+</style>
+</head>
+<body>
+
+<canvas id="cvs"></canvas>
+
+<header class="hdr">
+  <div class="hdr-logo">WhiteDot · LIMEX</div>
+  <div class="hdr-tag">Vision II</div>
+</header>
+
+<div class="side-ui">
+  <div class="side-count" id="ctop">01</div>
+  <div class="side-bar"><div class="side-fill" id="sfill"></div></div>
+  <div class="side-count" id="cbot">05</div>
+</div>
+
+<div class="nav-arrows">
+  <div class="nav-btn" id="btnL">&#8592;</div>
+  <div class="nav-btn" id="btnR">&#8594;</div>
+</div>
+
+<div class="hint" id="hint">
+  <div class="hint-dots"><span></span><span></span><span></span></div>
+  <span>Scroll to navigate</span>
+</div>
+
+<div id="track">
+
+  <!-- 1 · MATERIAL -->
+  <section class="sec" data-i="0">
+    <div class="lp">
+      <div class="cb cb-tl"></div><div class="cb cb-tr"></div>
+      <div class="cb cb-bl"></div><div class="cb cb-br"></div>
+      <div class="stage">
+        <div style="position:relative;display:inline-block">
+          <div class="medal"></div>
+          <div class="orb o1"></div>
+          <div class="orb o2"></div>
+        </div>
+      </div>
+    </div>
+    <div class="rp">
+      <div class="bg-num">I</div>
+      <div class="txt">
+        <div class="lbl">I · Material</div>
+        <h2>Born from<br>limestone</h2>
+        <p>A fusion of calcium carbonate and wood pulp fiber — LIMEX reimagines what a material can be at its most elemental.</p>
+        <div class="specs">
+          <div class="sr"><span class="sk">Primary Component</span><span class="sv">CaCO₃ · 80%</span></div>
+          <div class="sr"><span class="sk">Binder</span><span class="sv">Wood Pulp Fiber</span></div>
+          <div class="sr"><span class="sk">Category</span><span class="sv">Composite Material</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · ORIGIN -->
+  <section class="sec" data-i="1">
+    <div class="lp">
+      <div class="cb cb-tl"></div><div class="cb cb-tr"></div>
+      <div class="cb cb-bl"></div><div class="cb cb-br"></div>
+      <div class="stage">
+        <div class="topo">
+          <div class="tl" style="top:18%"></div><div class="tl" style="top:32%"></div>
+          <div class="tl" style="top:50%"></div><div class="tl" style="top:68%"></div>
+          <div class="tl" style="top:82%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="rp">
+      <div class="bg-num">II</div>
+      <div class="txt">
+        <div class="lbl">II · Origin</div>
+        <h2>From Japan.<br>For the world.</h2>
+        <p>Developed by TBM Co., Ltd — over a decade of materials science, now authorized for global reach through trusted partners.</p>
+        <div class="specs">
+          <div class="sr"><span class="sk">Developer</span><span class="sv">TBM Co., Ltd · Japan</span></div>
+          <div class="sr"><span class="sk">Est.</span><span class="sv">2013</span></div>
+          <div class="sr"><span class="sk">India Access</span><span class="sv">Sevendot · WhiteDot LLP</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · FORM -->
+  <section class="sec" data-i="2">
+    <div class="lp">
+      <div class="cb cb-tl"></div><div class="cb cb-tr"></div>
+      <div class="cb cb-bl"></div><div class="cb cb-br"></div>
+      <div class="stage">
+        <div class="profwrap">
+          <div class="profbar">
+            <div class="dimline"><span class="dimlabel">1.2 mm — 3.0 mm</span></div>
+          </div>
+          <div class="profshadow"></div>
+        </div>
+      </div>
+    </div>
+    <div class="rp">
+      <div class="bg-num">III</div>
+      <div class="txt">
+        <div class="lbl">III · Form</div>
+        <h2>Thin as paper.<br>Dense as stone.</h2>
+        <p>Mere millimeters of limestone composite — lighter than plastic, harder than assumption. Geometry redefined.</p>
+        <div class="specs">
+          <div class="sr"><span class="sk">Thickness Range</span><span class="sv">1.2 mm – 3.0 mm</span></div>
+          <div class="sr"><span class="sk">Weight vs Plastic</span><span class="sv">Up to 20% lighter</span></div>
+          <div class="sr"><span class="sk">Surface</span><span class="sv">Printable · Writable</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · COMPOSITE -->
+  <section class="sec" data-i="3">
+    <div class="lp">
+      <div class="cb cb-tl"></div><div class="cb cb-tr"></div>
+      <div class="cb cb-bl"></div><div class="cb cb-br"></div>
+      <div class="stage">
+        <div class="expl">
+          <div class="exl ew">
+            <div class="etag"><div class="etag-line"></div><span class="etag-text">Wood Pulp</span></div>
+          </div>
+          <div class="exl el">
+            <div class="etag"><div class="etag-line"></div><span class="etag-text">Limestone 80%</span></div>
+          </div>
+          <div class="exl ew">
+            <div class="etag"><div class="etag-line"></div><span class="etag-text">Wood Pulp</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="rp">
+      <div class="bg-num">IV</div>
+      <div class="txt">
+        <div class="lbl">IV · Composite</div>
+        <h2>Paper. Limestone.<br>Nothing else.</h2>
+        <p>No water in production. No plastic additives. Pure in concept and pure in constitution — a new standard.</p>
+        <div class="specs">
+          <div class="sr"><span class="sk">Water Used</span><span class="sv">0 Liters</span></div>
+          <div class="sr"><span class="sk">CO₂ Impact</span><span class="sv">Reduced vs Paper</span></div>
+          <div class="sr"><span class="sk">Additives</span><span class="sv">None</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · GATEWAY -->
+  <section class="sec" data-i="4">
+    <div class="lp">
+      <div class="cb cb-tl"></div><div class="cb cb-tr"></div>
+      <div class="cb cb-bl"></div><div class="cb cb-br"></div>
+      <div class="stage">
+        <div class="ptile cross">
+          <div class="tcb tcb-tl"></div><div class="tcb tcb-tr"></div>
+          <div class="tcb tcb-bl"></div><div class="tcb tcb-br"></div>
+        </div>
+      </div>
+    </div>
+    <div class="rp">
+      <div class="bg-num">V</div>
+      <div class="txt">
+        <div class="lbl">V · Gateway</div>
+        <h2>India's<br>authorized access</h2>
+        <p>WhiteDot LLP — authorized partner via Sevendot. Bringing LIMEX to India's industries of tomorrow, today.</p>
+        <div class="specs">
+          <div class="sr"><span class="sk">Authorization</span><span class="sv">Via Sevendot · TBM Japan</span></div>
+          <div class="sr"><span class="sk">Territory</span><span class="sv">India</span></div>
+          <div class="sr"><span class="sk">Entity</span><span class="sv">WhiteDot LLP</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+const N=5; let cur=0,busy=false;
+const track=document.getElementById('track');
+const secs=document.querySelectorAll('.sec');
+const sfill=document.getElementById('sfill');
+const ctop=document.getElementById('ctop');
+const hint=document.getElementById('hint');
+
+function go(i){
+  if(busy||i===cur)return;
+  if(i<0||i>=N)return;
+  busy=true;
+  secs[cur].classList.remove('on');
+  cur=i;
+  track.style.transform=`translateX(-${i*100}vw)`;
+  setTimeout(()=>{
+    secs[cur].classList.add('on');
+    sfill.style.height=(i/(N-1)*100)+'%';
+    ctop.textContent=String(cur+1).padStart(2,'0');
+    if(cur>0)hint.style.opacity='0';
+    busy=false;
+  },200);
+}
+
+document.getElementById('btnL').addEventListener('click',()=>go(cur-1));
+document.getElementById('btnR').addEventListener('click',()=>go(cur+1));
+
+let wl=false;
+window.addEventListener('wheel',e=>{
+  if(wl)return;if(Math.abs(e.deltaY)<15&&Math.abs(e.deltaX)<15)return;
+  wl=true;
+  const d=Math.abs(e.deltaY)>Math.abs(e.deltaX)?e.deltaY:e.deltaX;
+  go(d>0?cur+1:cur-1);
+  setTimeout(()=>{wl=false;},1080);
+},{passive:true});
+
+let tx=0;
+window.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;},{passive:true});
+window.addEventListener('touchend',e=>{
+  const d=tx-e.changedTouches[0].clientX;
+  if(Math.abs(d)>45)go(d>0?cur+1:cur-1);
+},{passive:true});
+
+window.addEventListener('keydown',e=>{
+  if(['ArrowRight','ArrowDown'].includes(e.key))go(cur+1);
+  if(['ArrowLeft','ArrowUp'].includes(e.key))go(cur-1);
+});
+
+/* Particles */
+const cvs=document.getElementById('cvs');
+const ctx=cvs.getContext('2d');
+function rsz(){cvs.width=innerWidth;cvs.height=innerHeight;}rsz();window.addEventListener('resize',rsz);
+const pts=Array.from({length:45},()=>({
+  x:Math.random()*innerWidth,y:Math.random()*innerHeight,
+  r:.2+Math.random()*1.1,
+  vx:(Math.random()-.5)*.22,vy:(Math.random()-.5)*.14,
+  a:Math.random()*.3+.03,ad:(Math.random()>.5?1:-1),
+}));
+(function tick(){
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  pts.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.a+=p.ad*.0016;
+    if(p.a>.34||p.a<.02)p.ad*=-1;
+    if(p.x<0)p.x=cvs.width;if(p.x>cvs.width)p.x=0;
+    if(p.y<0)p.y=cvs.height;if(p.y>cvs.height)p.y=0;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(111,160,188,${p.a})`;ctx.fill();
+  });
+  requestAnimationFrame(tick);
+})();
+
+setTimeout(()=>{secs[0].classList.add('on');},120);
+</script>
+</body>
+</html>
