@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LIMEX — Version Preview · WhiteDot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@200;300;400&family=Cormorant+Garamond:wght@300;400&display=swap">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --bg:#060605;
+  --card:#0e0f0e;
+  --border:rgba(255,255,255,.07);
+  --gold:#c4a87e;
+  --blue:#6fa0bc;
+  --text:#dde0da;
+  --dim:rgba(221,224,218,.4);
+}
+
+html,body{
+  width:100%;min-height:100%;
+  background:var(--bg);color:var(--text);
+  font-family:'DM Sans',sans-serif;font-weight:200;
+  overflow-x:hidden;
+}
+
+/* Subtle grid */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:60px 60px;pointer-events:none;z-index:0;
+}
+
+/* Page wrap */
+.page{position:relative;z-index:1;padding:4rem 3.5rem 5rem}
+
+/* ── Header ──────────────────────────────────────────── */
+.top{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  margin-bottom:3.5rem;padding-bottom:2rem;
+  border-bottom:1px solid var(--border);
+}
+.brand{
+  display:flex;flex-direction:column;gap:.5rem;
+}
+.brand-label{
+  font-size:.5rem;letter-spacing:.45em;color:var(--dim);text-transform:uppercase;
+}
+.brand-title{
+  font-family:'Cormorant Garamond',serif;font-weight:300;font-size:2rem;
+  line-height:1;
+}
+.brand-sub{font-size:.58rem;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-top:.3rem}
+
+.active-badge{
+  display:flex;align-items:center;gap:.6rem;
+  font-size:.5rem;letter-spacing:.25em;text-transform:uppercase;color:var(--dim);
+}
+.badge-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--gold);
+  box-shadow:0 0 8px var(--gold);
+  transition:all .5s ease;
+}
+.badge-dot.v2{background:var(--blue);box-shadow:0 0 8px var(--blue)}
+.badge-name{
+  color:var(--text);font-weight:300;
+  transition:color .3s;
+}
+
+/* ── Comparison grid ─────────────────────────────────── */
+.compare{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  gap:0;
+  align-items:start;
+}
+
+/* ── VS divider ──────────────────────────────────────── */
+.vs-col{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:flex-start;
+  padding:0 2rem;padding-top:220px;
+  gap:1.5rem;
+}
+.vs-line{width:1px;height:60px;background:var(--border)}
+.vs-label{font-size:.6rem;letter-spacing:.25em;color:rgba(255,255,255,.15)}
+
+/* ── Version card ────────────────────────────────────── */
+.vcard{
+  display:flex;flex-direction:column;gap:1.8rem;
+}
+
+/* Preview window */
+.preview-window{
+  position:relative;
+  width:100%;
+  padding-bottom:56.25%; /* 16:9 */
+  background:#0a0a09;
+  border-radius:10px;
+  overflow:hidden;
+  border:1px solid var(--border);
+  box-shadow:0 25px 60px -15px rgba(0,0,0,.8);
+  transition:box-shadow .4s ease,border-color .4s ease;
+}
+.preview-window:hover{
+  box-shadow:0 30px 70px -15px rgba(0,0,0,.9);
+}
+.vcard.v1 .preview-window:hover{border-color:rgba(196,168,126,.25)}
+.vcard.v2 .preview-window:hover{border-color:rgba(111,160,188,.25)}
+
+/* Browser chrome mockup */
+.browser-bar{
+  position:absolute;top:0;left:0;right:0;height:28px;
+  background:rgba(20,20,18,.9);
+  border-bottom:1px solid rgba(255,255,255,.05);
+  display:flex;align-items:center;padding:0 10px;gap:5px;
+  z-index:10;
+}
+.browser-dot{width:7px;height:7px;border-radius:50%}
+.bd-r{background:#ff5f57}.bd-y{background:#febc2e}.bd-g{background:#28c840}
+.browser-url{
+  flex:1;margin:0 8px;height:14px;
+  background:rgba(255,255,255,.06);border-radius:3px;
+  display:flex;align-items:center;padding:0 8px;
+  font-size:.42rem;letter-spacing:.05em;color:rgba(255,255,255,.2);
+}
+
+/* Iframe wrapper */
+.iw{
+  position:absolute;
+  top:28px;left:0;right:0;bottom:0;
+  overflow:hidden;
+}
+.iw iframe{
+  width:1440px;height:900px;
+  border:none;
+  transform:scale(0.328);
+  transform-origin:top left;
+  pointer-events:none;
+}
+
+/* Loading overlay */
+.loading{
+  position:absolute;inset:28px 0 0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg);
+  z-index:5;
+  transition:opacity .5s ease 1s;
+}
+.loading.hide{opacity:0;pointer-events:none}
+.load-dot{
+  width:4px;height:4px;border-radius:50%;
+  background:rgba(255,255,255,.2);
+  animation:ldot 1.4s ease-in-out infinite;
+  margin:0 3px;
+}
+.load-dot:nth-child(2){animation-delay:.2s}
+.load-dot:nth-child(3){animation-delay:.4s}
+@keyframes ldot{0%,80%,100%{transform:scale(.7);opacity:.3}40%{transform:scale(1);opacity:1}}
+
+/* Version badge overlay on preview */
+.vbadge{
+  position:absolute;bottom:10px;left:10px;
+  font-size:.42rem;letter-spacing:.25em;text-transform:uppercase;
+  padding:.2rem .55rem;border-radius:2px;z-index:10;
+  font-family:'DM Sans',sans-serif;
+}
+.v1 .vbadge{background:rgba(196,168,126,.15);color:var(--gold);border:1px solid rgba(196,168,126,.2)}
+.v2 .vbadge{background:rgba(111,160,188,.12);color:var(--blue);border:1px solid rgba(111,160,188,.2)}
+
+/* ── Info block ──────────────────────────────────────── */
+.info{display:flex;flex-direction:column;gap:1.2rem}
+.vname{
+  font-family:'Cormorant Garamond',serif;font-weight:300;font-size:1.5rem;
+}
+.vname span{font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;vertical-align:middle;margin-left:.5rem}
+.vname .gold{color:var(--gold)}
+.vname .blue{color:var(--blue)}
+.vdesc{font-size:.64rem;line-height:1.8;color:var(--dim);max-width:44ch}
+
+/* Feature tags */
+.tags{display:flex;flex-wrap:wrap;gap:.4rem}
+.tag{
+  font-size:.44rem;letter-spacing:.15em;text-transform:uppercase;
+  padding:.2rem .65rem;border-radius:20px;
+  border:1px solid var(--border);color:var(--dim);
+  transition:all .3s;
+}
+.v1 .tag{border-color:rgba(196,168,126,.2);color:rgba(196,168,126,.7)}
+.v2 .tag{border-color:rgba(111,160,188,.2);color:rgba(111,160,188,.7)}
+
+/* Action buttons */
+.actions{display:flex;gap:.8rem;align-items:center;margin-top:.5rem}
+.btn-launch{
+  display:inline-flex;align-items:center;gap:.5rem;
+  padding:.65rem 1.5rem;border-radius:4px;
+  font-size:.54rem;letter-spacing:.2em;text-transform:uppercase;
+  font-weight:300;cursor:pointer;
+  text-decoration:none;
+  transition:all .35s ease;
+  font-family:'DM Sans',sans-serif;
+}
+.v1 .btn-launch{
+  background:rgba(196,168,126,.12);color:var(--gold);
+  border:1px solid rgba(196,168,126,.25);
+}
+.v1 .btn-launch:hover{background:rgba(196,168,126,.22);border-color:rgba(196,168,126,.45)}
+.v2 .btn-launch{
+  background:rgba(111,160,188,.1);color:var(--blue);
+  border:1px solid rgba(111,160,188,.22);
+}
+.v2 .btn-launch:hover{background:rgba(111,160,188,.2);border-color:rgba(111,160,188,.42)}
+
+.btn-activate{
+  padding:.65rem 1.5rem;border-radius:4px;
+  font-size:.54rem;letter-spacing:.2em;text-transform:uppercase;
+  font-weight:300;cursor:pointer;border:none;
+  font-family:'DM Sans',sans-serif;
+  transition:all .35s ease;
+}
+.v1 .btn-activate{background:var(--gold);color:#1a1510}
+.v2 .btn-activate{background:var(--blue);color:#0d1820}
+.btn-activate:hover{opacity:.85;transform:translateY(-1px)}
+
+.btn-activate.active-now{
+  position:relative;
+}
+.btn-activate.active-now::after{
+  content:'✓ Active';
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:4px;
+}
+
+/* ── Diff table ──────────────────────────────────────── */
+.diff-section{
+  margin-top:4rem;padding-top:2.5rem;
+  border-top:1px solid var(--border);
+}
+.diff-title{
+  font-size:.5rem;letter-spacing:.4em;text-transform:uppercase;color:var(--dim);
+  margin-bottom:1.5rem;text-align:center;
+}
+.diff-table{
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;
+}
+.diff-row{display:contents}
+.diff-cell{
+  padding:.75rem 1rem;
+  font-size:.52rem;line-height:1.6;
+  border-bottom:1px solid var(--border);
+}
+.diff-cell:not(:last-child){border-right:1px solid var(--border)}
+.diff-row:last-child .diff-cell{border-bottom:none}
+.diff-head{color:rgba(255,255,255,.25);letter-spacing:.15em;text-transform:uppercase;font-size:.44rem;background:rgba(255,255,255,.02)}
+.diff-v1{color:rgba(196,168,126,.8)}
+.diff-v2{color:rgba(111,160,188,.8)}
+
+/* ── Footer note ─────────────────────────────────────── */
+.foot{
+  margin-top:3rem;padding-top:2rem;
+  border-top:1px solid var(--border);
+  text-align:center;
+  font-size:.5rem;letter-spacing:.15em;color:var(--dim);
+  line-height:2;
+}
+.foot strong{color:var(--text);font-weight:300}
+
+/* Responsive */
+@media(max-width:1100px){
+  .compare{grid-template-columns:1fr;gap:3rem}
+  .vs-col{flex-direction:row;padding:0;justify-content:center}
+  .vs-col .vs-line{width:60px;height:1px}
+  .diff-table{grid-template-columns:1fr;border:none;gap:.4rem}
+  .diff-row{display:flex;flex-direction:row;gap:.5rem}
+  .diff-cell{border:1px solid var(--border);border-radius:4px}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Header ── -->
+  <div class="top">
+    <div class="brand">
+      <div class="brand-label">WhiteDot LLP · LIMEX</div>
+      <div class="brand-title">Version Selector</div>
+      <div class="brand-sub">Scroll Storytelling — Choose your visual direction</div>
+    </div>
+    <div class="active-badge">
+      <div class="badge-dot" id="badgeDot"></div>
+      <span>Active:</span>
+      <span class="badge-name" id="badgeName">Vision I</span>
+    </div>
+  </div>
+
+  <!-- ── Comparison ── -->
+  <div class="compare">
+
+    <!-- V1 card -->
+    <div class="vcard v1">
+      <div class="preview-window">
+        <div class="browser-bar">
+          <div class="browser-dot bd-r"></div>
+          <div class="browser-dot bd-y"></div>
+          <div class="browser-dot bd-g"></div>
+          <div class="browser-url">limex-scroll-story.html</div>
+        </div>
+        <div class="iw">
+          <iframe src="limex-scroll-story.html" id="f1" onload="this.closest('.preview-window').querySelector('.loading').classList.add('hide')"></iframe>
+        </div>
+        <div class="loading"><div class="load-dot"></div><div class="load-dot"></div><div class="load-dot"></div></div>
+        <div class="vbadge">Vision I</div>
+      </div>
+      <div class="info">
+        <div class="vname">Vision I <span class="gold">— Cinematic</span></div>
+        <div class="vdesc">Dark, vertical scroll experience. Single centered stone object per chapter. Warm gold palette. Poetic, atmospheric storytelling inspired by the "object add" reference.</div>
+        <div class="tags">
+          <div class="tag">Vertical Scroll</div>
+          <div class="tag">Warm Gold</div>
+          <div class="tag">Centered Hero</div>
+          <div class="tag">Atmospheric</div>
+          <div class="tag">Cinematic</div>
+        </div>
+        <div class="actions">
+          <a href="limex-scroll-story.html" target="_blank" class="btn-launch">Open Full ↗</a>
+          <button class="btn-activate" id="activateV1" onclick="setActive(1)">Use Vision I</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VS divider -->
+    <div class="vs-col">
+      <div class="vs-line"></div>
+      <div class="vs-label">VS</div>
+      <div class="vs-line"></div>
+    </div>
+
+    <!-- V2 card -->
+    <div class="vcard v2">
+      <div class="preview-window">
+        <div class="browser-bar">
+          <div class="browser-dot bd-r"></div>
+          <div class="browser-dot bd-y"></div>
+          <div class="browser-dot bd-g"></div>
+          <div class="browser-url">limex-v2.html</div>
+        </div>
+        <div class="iw">
+          <iframe src="limex-v2.html" id="f2" onload="this.closest('.preview-window').querySelector('.loading').classList.add('hide')"></iframe>
+        </div>
+        <div class="loading"><div class="load-dot"></div><div class="load-dot"></div><div class="load-dot"></div></div>
+        <div class="vbadge">Vision II</div>
+      </div>
+      <div class="info">
+        <div class="vname">Vision II <span class="blue">— Technical</span></div>
+        <div class="vdesc">Cool, horizontal scroll experience. Split-screen — stone specimen left, technical data right. Icy blue-silver palette. Blueprint grid. Engineered aesthetic with spec data.</div>
+        <div class="tags">
+          <div class="tag">Horizontal Scroll</div>
+          <div class="tag">Cool Blue</div>
+          <div class="tag">Split Layout</div>
+          <div class="tag">Blueprint Grid</div>
+          <div class="tag">Technical Data</div>
+        </div>
+        <div class="actions">
+          <a href="limex-v2.html" target="_blank" class="btn-launch">Open Full ↗</a>
+          <button class="btn-activate" id="activateV2" onclick="setActive(2)">Use Vision II</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Differences table ── -->
+  <div class="diff-section">
+    <div class="diff-title">Side by Side Comparison</div>
+    <div class="diff-table">
+      <div class="diff-row">
+        <div class="diff-cell diff-head">Feature</div>
+        <div class="diff-cell diff-head">Vision I — Cinematic</div>
+        <div class="diff-cell diff-head">Vision II — Technical</div>
+      </div>
+      <div class="diff-row">
+        <div class="diff-cell diff-head">Scroll Direction</div>
+        <div class="diff-cell diff-v1">Vertical (↕)</div>
+        <div class="diff-cell diff-v2">Horizontal (↔)</div>
+      </div>
+      <div class="diff-row">
+        <div class="diff-cell diff-head">Layout</div>
+        <div class="diff-cell diff-v1">Full-screen centered hero</div>
+        <div class="diff-cell diff-v2">50/50 split — stone + text</div>
+      </div>
+      <div class="diff-row">
+        <div class="diff-cell diff-head">Color Palette</div>
+        <div class="diff-cell diff-v1">Near-black + warm gold</div>
+        <div class="diff-cell diff-v2">Dark charcoal + icy blue</div>
+      </div>
+      <div class="diff-row">
+        <div class="diff-cell diff-head">Text Style</div>
+        <div class="diff-cell diff-v1">Poetic, editorial</div>
+        <div class="diff-cell diff-v2">Technical specs + data</div>
+      </div>
+      <div class="diff-row">
+        <div class="diff-cell diff-head">Background</div>
+        <div class="diff-cell diff-v1">Pure dark + bokeh floaters</div>
+        <div class="diff-cell diff-v2">Blueprint grid overlay</div>
+      </div>
+      <div class="diff-row">
+        <div class="diff-cell diff-head">Stone Objects</div>
+        <div class="diff-cell diff-v1">Floating / organic</div>
+        <div class="diff-cell diff-v2">Specimen-framed / geometric</div>
+      </div>
+      <div class="diff-row">
+        <div class="diff-cell diff-head">Typography</div>
+        <div class="diff-cell diff-v1">Cormorant Garamond (serif)</div>
+        <div class="diff-cell diff-v2">Playfair Display italic</div>
+      </div>
+      <div class="diff-row">
+        <div class="diff-cell diff-head">Best For</div>
+        <div class="diff-cell diff-v1">Hero landing, brand story</div>
+        <div class="diff-cell diff-v2">Product detail, B2B pitch</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Footer ── -->
+  <div class="foot">
+    <strong>How to use:</strong> Open this file and both version files in the same folder. Click <strong>"Open Full ↗"</strong> to preview in full screen.<br>
+    Tell Raj: <em>"Turn off Vision I, use Vision II"</em> — or vice versa — to switch which one gets integrated into the live site.
+  </div>
+
+</div>
+
+<script>
+let activeV = 1;
+const dot = document.getElementById('badgeDot');
+const name = document.getElementById('badgeName');
+const b1 = document.getElementById('activateV1');
+const b2 = document.getElementById('activateV2');
+
+function setActive(v){
+  activeV = v;
+  if(v===1){
+    dot.className='badge-dot';
+    name.textContent='Vision I — Cinematic';
+    b1.textContent='✓ Currently Active';
+    b1.style.opacity='.6';b1.style.cursor='default';
+    b2.textContent='Use Vision II';
+    b2.style.opacity='1';b2.style.cursor='pointer';
+  } else {
+    dot.className='badge-dot v2';
+    name.textContent='Vision II — Technical';
+    b2.textContent='✓ Currently Active';
+    b2.style.opacity='.6';b2.style.cursor='default';
+    b1.textContent='Use Vision I';
+    b1.style.opacity='1';b1.style.cursor='pointer';
+  }
+}
+
+// Prevent btn click doing nothing if already active
+b1.addEventListener('click',()=>{if(activeV===1)return;});
+b2.addEventListener('click',()=>{if(activeV===2)return;});
+</script>
+</body>
+</html>
